@@ -252,10 +252,12 @@
   <ItemGroup>
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Hud.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraManager.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Hud.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cyclone_Library\Cyclone_Library.vcxproj">
