@@ -119,6 +119,42 @@ end
 downloadRaylib = true
 raylib_dir = "external/raylib-master"
 
+-- ============================================================
+-- Chemins de tes libs (relatifs au dossier build/ où se trouve ce fichier)
+-- A ADAPTER selon l'emplacement réel de tes dossiers.
+-- ============================================================
+cyclone_dir = "../Cyclone"            -- doit contenir include/ et src/
+game_lib_dir = "../VroumAndBoomLib"   -- Game.cpp, Game.h
+test_dir = "../Test"                  -- test.cpp
+
+-- Réglages communs aux projets qui utilisent raylib (exe, tests)
+function link_raylib_app()
+    links {"raylib"}
+    includedirs { raylib_dir .. "/src" }
+
+    filter "action:vs*"
+        dependson {"raylib"}
+        links {"raylib.lib"}
+
+    filter "system:windows"
+        links {"winmm", "gdi32", "opengl32"}
+        libdirs {"../bin/%{cfg.buildcfg}"}
+
+    filter "system:linux"
+        links {"pthread", "m", "dl", "rt"}
+
+    filter {"system:linux", "options:wayland=off"}
+        links {"X11"}
+
+    filter {"system:linux", "options:wayland=on"}
+        links {"wayland-client", "wayland-cursor", "wayland-egl", "xkbcommon"}
+
+    filter "system:macosx"
+        links {"OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreAudio.framework", "CoreVideo.framework", "AudioToolbox.framework", "QuartzCore.framework"}
+
+    filter {}
+end
+
 workspaceName = 'MyGame'
 baseName = path.getbasename(path.getdirectory(os.getcwd()));
 
@@ -168,6 +204,53 @@ if (downloadRaylib) then
 
     startproject(workspaceName)
 
+    -- ========================================================
+    -- Cyclone_Library : lib statique, sans modification du code
+    -- ========================================================
+    project "Cyclone_Library"
+        kind "StaticLib"
+        language "C++"
+        cppdialect "C++20"
+        location "../Cyclone_Library"
+        targetdir "../bin/%{cfg.buildcfg}"
+        objdir "../obj/Cyclone_Library/%{cfg.buildcfg}"
+
+        files { cyclone_dir .. "/src/**.cpp", cyclone_dir .. "/include/**.h" }
+        includedirs { cyclone_dir .. "/include" }
+
+        filter "action:vs*"
+            defines{"_CRT_SECURE_NO_WARNINGS"}
+            characterset ("Unicode")
+            buildoptions { "/Zc:__cplusplus" }
+        filter{}
+
+    -- ========================================================
+    -- VroumAndBoomLib : lib statique du jeu (Cyclone + raylib)
+    -- ========================================================
+    project "VroumAndBoomLib"
+        kind "StaticLib"
+        language "C++"
+        cppdialect "C++20"
+        location "../VroumAndBoomLib"
+        targetdir "../bin/%{cfg.buildcfg}"
+        objdir "../obj/VroumAndBoomLib/%{cfg.buildcfg}"
+
+        files { game_lib_dir .. "/**.cpp", game_lib_dir .. "/**.h", game_lib_dir .. "/**.hpp" }
+        includedirs { game_lib_dir, cyclone_dir .. "/include", raylib_dir .. "/src" }
+        links { "Cyclone_Library" }
+        dependson { "raylib" }
+
+        platform_defines()
+
+        filter "action:vs*"
+            defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
+            characterset ("Unicode")
+            buildoptions { "/Zc:__cplusplus" }
+        filter{}
+
+    -- ========================================================
+    -- Exécutable du jeu
+    -- ========================================================
     project (workspaceName)
         kind "ConsoleApp"
         location "../"
@@ -206,43 +289,53 @@ if (downloadRaylib) then
         
         includedirs { "../src" }
         includedirs { "../include" }
+        includedirs { game_lib_dir, cyclone_dir .. "/include" }
 
-        links {"raylib"}
+        links {"VroumAndBoomLib", "Cyclone_Library"}
+        link_raylib_app()
 
         cdialect "C17"
         cppdialect "C++20"
-
-        includedirs {raylib_dir .. "/src" }
 
         flags { "ShadowedVariables"}
         platform_defines()
 
         filter "action:vs*"
             defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
-            dependson {"raylib"}
-            links {"raylib.lib"}
             characterset ("Unicode")
             buildoptions { "/Zc:__cplusplus" }
 
         filter "system:windows"
             defines{"_WIN32"}
-            links {"winmm", "gdi32", "opengl32"}
-            libdirs {"../bin/%{cfg.buildcfg}"}
-
-        filter "system:linux"
-            links {"pthread", "m", "dl", "rt"}
-
-        filter {"system:linux", "options:wayland=off"}
-            links {"X11"}
-
-        filter {"system:linux", "options:wayland=on"}
-            links {"wayland-client", "wayland-cursor", "wayland-egl", "xkbcommon"}
-
-        filter "system:macosx"
-            links {"OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreAudio.framework", "CoreVideo.framework", "AudioToolbox.framework", "QuartzCore.framework"}
 
         filter{}
-        
+
+    -- ========================================================
+    -- Test : exécutable GoogleTest
+    -- ========================================================
+    project "Test"
+        kind "ConsoleApp"
+        language "C++"
+        cppdialect "C++20"
+        location "../Test"
+        targetdir "../bin/%{cfg.buildcfg}"
+        objdir "../obj/Test/%{cfg.buildcfg}"
+
+        files { test_dir .. "/**.cpp", test_dir .. "/**.h" }
+        includedirs { game_lib_dir, cyclone_dir .. "/include" }
+
+        links { "VroumAndBoomLib", "Cyclone_Library" }
+        link_raylib_app()
+        platform_defines()
+
+        filter "action:vs*"
+            defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
+            characterset ("Unicode")
+            buildoptions { "/Zc:__cplusplus" }
+            -- GoogleTest via NuGet : recopie ici le nom exact du package
+            -- présent dans l'ancien Test/packages.config
+            nuget { "Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn:1.8.1.7" }
+        filter{}
 
     project "raylib"
         kind "StaticLib"
@@ -259,42 +352,20 @@ if (downloadRaylib) then
             defines {"GLFW_LINUX_ENABLE_WAYLAND=TRUE" }
 
         filter {"options:wayland=on", "system:linux"}
-            prebuildcommands {
-                "@echo Generating Wayland protocols...",
-                -- Core Wayland & Shell
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/wayland.xml build/" .. raylib_dir .. "/src/wayland-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/wayland.xml build/" .. raylib_dir .. "/src/wayland-client-protocol-code.h",
-
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-shell.xml build/" .. raylib_dir .. "/src/xdg-shell-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-shell.xml build/" .. raylib_dir .. "/src/xdg-shell-client-protocol-code.h",
-
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-decoration-unstable-v1.xml build/" .. raylib_dir .. "/src/xdg-decoration-unstable-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-decoration-unstable-v1.xml build/" .. raylib_dir .. "/src/xdg-decoration-unstable-v1-client-protocol-code.h",
-
-                -- Viewporter
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/viewporter.xml build/" .. raylib_dir .. "/src/viewporter-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/viewporter.xml build/" .. raylib_dir .. "/src/viewporter-client-protocol-code.h",
-
-                -- Relative Pointer
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/relative-pointer-unstable-v1.xml build/" .. raylib_dir .. "/src/relative-pointer-unstable-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/relative-pointer-unstable-v1.xml build/" .. raylib_dir .. "/src/relative-pointer-unstable-v1-client-protocol-code.h",
-
-                -- Pointer Constraints
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/pointer-constraints-unstable-v1.xml build/" .. raylib_dir .. "/src/pointer-constraints-unstable-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/pointer-constraints-unstable-v1.xml build/" .. raylib_dir .. "/src/pointer-constraints-unstable-v1-client-protocol-code.h",
-
-                -- Fractional Scale
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/fractional-scale-v1.xml build/" .. raylib_dir .. "/src/fractional-scale-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/fractional-scale-v1.xml build/" .. raylib_dir .. "/src/fractional-scale-v1-client-protocol-code.h",
-
-                -- XDG Activation
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-activation-v1.xml build/" .. raylib_dir .. "/src/xdg-activation-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/xdg-activation-v1.xml build/" .. raylib_dir .. "/src/xdg-activation-v1-client-protocol-code.h",
-
-                -- Idle Inhibit
-                "@wayland-scanner client-header build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/idle-inhibit-unstable-v1.xml build/" .. raylib_dir .. "/src/idle-inhibit-unstable-v1-client-protocol.h",
-                "@wayland-scanner private-code build/" .. raylib_dir .. "/src/external/glfw/deps/wayland/idle-inhibit-unstable-v1.xml build/" .. raylib_dir .. "/src/idle-inhibit-unstable-v1-client-protocol-code.h",
+            local wl = "build/" .. raylib_dir .. "/src"
+            local xml = wl .. "/external/glfw/deps/wayland/"
+            local protocols = {
+                "wayland", "xdg-shell", "xdg-decoration-unstable-v1", "viewporter",
+                "relative-pointer-unstable-v1", "pointer-constraints-unstable-v1",
+                "fractional-scale-v1", "xdg-activation-v1", "idle-inhibit-unstable-v1",
             }
+            local cmds = { "@echo Generating Wayland protocols..." }
+            for _, p in ipairs(protocols) do
+                local out = (p == "wayland") and "wayland-client-protocol" or (p .. "-client-protocol")
+                table.insert(cmds, "@wayland-scanner client-header " .. xml .. p .. ".xml " .. wl .. "/" .. out .. ".h")
+                table.insert(cmds, "@wayland-scanner private-code " .. xml .. p .. ".xml " .. wl .. "/" .. out .. "-code.h")
+            end
+            prebuildcommands(cmds)
         filter {}
 
         filter "action:vs*"
