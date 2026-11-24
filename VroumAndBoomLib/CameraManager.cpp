@@ -52,3 +52,8 @@ void CameraManager::Update(float dt)
         break;
     }
 }
+
+void CameraManager::Render()
+{
+    DrawText(TextFormat("Mode de camera: %s", CameraModeToString(camera_mode)), 10, 10, 20, BLACK);
+}

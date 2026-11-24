@@ -12,4 +12,5 @@ private:
     void Render();
     
     CameraManager camera_manager;
+    
 };

@@ -8,6 +8,7 @@ class CameraManager
 public:
     void Init();
     void Update(float dt);
+    void Render();
     
     void begin() const {BeginMode3D(camera);}
     void End() const {EndMode3D();}
@@ -28,4 +29,13 @@ private:
         FREECAM
     };
     CameraMode camera_mode = CameraMode::ORBITAL;
+    
+    const char* CameraModeToString(CameraMode mode)
+    {
+        switch (mode)
+        {
+        case ORBITAL: return "Orbital";
+        case FREECAM: return "Freecam";
+        }
+    }
 };

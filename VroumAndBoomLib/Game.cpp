@@ -34,6 +34,7 @@ void Game::Update(float dt)
 
 void Game::Render()
 {
+    camera_manager.Render();
     camera_manager.begin();
     
     DrawCube({0,0,0}, 2.0f, 2.0f, 2.0f, RED);
