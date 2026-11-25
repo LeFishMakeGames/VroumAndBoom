@@ -121,9 +121,9 @@ raylib_dir = "external/raylib-master"
 
 -- ============================================================
 -- Chemins de tes libs (relatifs au dossier build/ où se trouve ce fichier)
--- A ADAPTER selon l'emplacement réel de tes dossiers.
+-- (déjà réglés pour le repo VroumAndBoom)
 -- ============================================================
-cyclone_dir = "../Cyclone"            -- doit contenir include/ et src/
+cyclone_dir = "../Cyclone_Library"    -- sources Cyclone à plat (.cpp et .h dans le même dossier)
 game_lib_dir = "../VroumAndBoomLib"   -- Game.cpp, Game.h
 test_dir = "../Test"                  -- test.cpp
 
@@ -215,8 +215,8 @@ if (downloadRaylib) then
         targetdir "../bin/%{cfg.buildcfg}"
         objdir "../obj/Cyclone_Library/%{cfg.buildcfg}"
 
-        files { cyclone_dir .. "/src/**.cpp", cyclone_dir .. "/include/**.h" }
-        includedirs { cyclone_dir .. "/include" }
+        files { cyclone_dir .. "/**.cpp", cyclone_dir .. "/**.h" }
+        includedirs { cyclone_dir }
 
         filter "action:vs*"
             defines{"_CRT_SECURE_NO_WARNINGS"}
@@ -236,7 +236,7 @@ if (downloadRaylib) then
         objdir "../obj/VroumAndBoomLib/%{cfg.buildcfg}"
 
         files { game_lib_dir .. "/**.cpp", game_lib_dir .. "/**.h", game_lib_dir .. "/**.hpp" }
-        includedirs { game_lib_dir, cyclone_dir .. "/include", raylib_dir .. "/src" }
+        includedirs { game_lib_dir, cyclone_dir, raylib_dir .. "/src" }
         links { "Cyclone_Library" }
         dependson { "raylib" }
 
@@ -289,7 +289,7 @@ if (downloadRaylib) then
         
         includedirs { "../src" }
         includedirs { "../include" }
-        includedirs { game_lib_dir, cyclone_dir .. "/include" }
+        includedirs { game_lib_dir, cyclone_dir }
 
         links {"VroumAndBoomLib", "Cyclone_Library"}
         link_raylib_app()
@@ -322,7 +322,7 @@ if (downloadRaylib) then
         objdir "../obj/Test/%{cfg.buildcfg}"
 
         files { test_dir .. "/**.cpp", test_dir .. "/**.h" }
-        includedirs { game_lib_dir, cyclone_dir .. "/include" }
+        includedirs { game_lib_dir, cyclone_dir }
 
         links { "VroumAndBoomLib", "Cyclone_Library" }
         link_raylib_app()
@@ -332,8 +332,7 @@ if (downloadRaylib) then
             defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
             characterset ("Unicode")
             buildoptions { "/Zc:__cplusplus" }
-            -- GoogleTest via NuGet : recopie ici le nom exact du package
-            -- présent dans l'ancien Test/packages.config
+            -- GoogleTest via NuGet (même package que l'ancien Test/packages.config)
             nuget { "Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn:1.8.1.7" }
         filter{}
 

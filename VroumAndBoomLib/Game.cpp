@@ -2,12 +2,12 @@
 
 void Game::Init()
 {
-    const int screenWidth = 1080;
-    const int screenHeight = 720;
+    
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
     SetTargetFPS(60);
     
+    state =  new GameState();  
     camera_manager.Init();
 }
 
@@ -29,6 +29,7 @@ void Game::Run()
 void Game::Update(float dt)
 {
     camera_manager.Update(dt);
+    state->Update(dt);
 }
 
 
@@ -36,6 +37,8 @@ void Game::Render()
 {
     camera_manager.Render();
     camera_manager.begin();
+    
+    state->Render();
     
     DrawCube({0,0,0}, 2.0f, 2.0f, 2.0f, RED);
     DrawCubeWires({0,0,0}, 2.0f, 2.0f, 2.0f, MAROON);
