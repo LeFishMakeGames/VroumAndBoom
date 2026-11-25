@@ -252,12 +252,17 @@
   <ItemGroup>
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameEntity.h" />
     <ClInclude Include="Hud.h" />
+    <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="SceneObjects.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraManager.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Hud.cpp" />
+    <ClCompile Include="ObjectPool.cpp" />
+    <ClCompile Include="SceneObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cyclone_Library\Cyclone_Library.vcxproj">
