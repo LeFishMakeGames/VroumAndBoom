@@ -1,14 +1,8 @@
 ﻿#pragma once
-#include <cstdint>
 
-struct EntityId
+class GameEntity
 {
-    std::uint32_t InvalidSlot = 0;
-
-    std::uint32_t slot = InvalidSlot;
-    std::uint32_t generation = 0;
-
-    bool IsValid() const { return slot != InvalidSlot; }
-    
-    bool operator==(const EntityId&) const = default;
+public:
+    virtual ~GameEntity() = default;
+    virtual void Draw() = 0;
 };

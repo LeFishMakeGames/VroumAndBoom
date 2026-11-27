@@ -4,7 +4,7 @@ void Game::Init()
 {
     const int screenWidth = 1080;
     const int screenHeight = 720;
-
+    
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
     SetTargetFPS(60);
     

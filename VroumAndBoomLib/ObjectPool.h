@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <optional>
 
-#include "GameEntity.h"
+#include "EntityId.h"
 
 template <typename T, std::size_t Capacity> 
 class ObjectPool
@@ -15,7 +15,7 @@ public:
     EntityId Create(Args&&... args);
     
     T* Get(EntityId id);
-    void Destroy(int id);
+    void Destroy(EntityId id);
     void Clear();
 private:
     

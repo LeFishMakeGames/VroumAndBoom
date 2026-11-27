@@ -252,6 +252,7 @@
   <ItemGroup>
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="EntityId.h" />
     <ClInclude Include="GameEntity.h" />
     <ClInclude Include="Hud.h" />
     <ClInclude Include="ObjectPool.h" />
@@ -260,6 +261,7 @@
   <ItemGroup>
     <ClCompile Include="CameraManager.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameEntity.cpp" />
     <ClCompile Include="Hud.cpp" />
     <ClCompile Include="ObjectPool.cpp" />
     <ClCompile Include="SceneObjects.cpp" />
